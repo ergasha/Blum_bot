@@ -6,8 +6,10 @@ import time
 from datetime import datetime, timezone
 from payload import get_payload
 from payload.payload import get_payloads
+
 start_time = datetime.now()
 requests = cloudscraper.create_scraper()
+
 
 def load_credentials():
     try:
@@ -16,10 +18,11 @@ def load_credentials():
         return queries
     except FileNotFoundError:
         print("File query_id.txt tidak ditemukan.")
-        return 
+        return
     except Exception as e:
         print("Terjadi kesalahan saat memuat query:", str(e))
-        return 
+        return
+
 
 def parse_query(query: str):
     parsed_query = parse_qs(query)
@@ -28,16 +31,19 @@ def parse_query(query: str):
     parsed_query['user'] = user_data
     return parsed_query
 
+
 def get(id):
-        tokens = json.loads(open("tokens.json").read())
-        if str(id) not in tokens.keys():
-            return None
-        return tokens[str(id)]
+    tokens = json.loads(open("tokens.json").read())
+    if str(id) not in tokens.keys():
+        return None
+    return tokens[str(id)]
+
 
 def save(id, token):
-        tokens = json.loads(open("tokens.json").read())
-        tokens[str(id)] = token
-        open("tokens.json", "w").write(json.dumps(tokens, indent=4))
+    tokens = json.loads(open("tokens.json").read())
+    tokens[str(id)] = token
+    open("tokens.json", "w").write(json.dumps(tokens, indent=4))
+
 
 def update(id, new_token):
     tokens = json.loads(open("tokens.json").read())
@@ -47,6 +53,7 @@ def update(id, new_token):
     else:
         return None
 
+
 def delete(id):
     tokens = json.loads(open("tokens.json").read())
     if str(id) in tokens.keys():
@@ -54,7 +61,8 @@ def delete(id):
         open("tokens.json", "w").write(json.dumps(tokens, indent=4))
     else:
         return None
-    
+
+
 def delete_all():
     open("tokens.json", "w").write(json.dumps({}, indent=4))
 
@@ -62,6 +70,7 @@ def delete_all():
 def print_(word):
     now = datetime.now().isoformat(" ").split(".")[0]
     print(f"[{now}] {word}")
+
 
 def make_request(method, url, headers=None, json=None, data=None):
     retry_count = 0
@@ -75,7 +84,7 @@ def make_request(method, url, headers=None, json=None, data=None):
             response = requests.put(url, headers=headers, json=json, data=data)
         else:
             raise ValueError("Invalid method.")
-        
+
         if response.status_code >= 500:
             if retry_count >= 4:
                 print_(f"Status Code: {response.status_code} | {response.text}")
@@ -86,6 +95,7 @@ def make_request(method, url, headers=None, json=None, data=None):
             return None
         elif response.status_code >= 200:
             return response
+
 
 def getuseragent(index):
     try:
@@ -100,11 +110,12 @@ def getuseragent(index):
     except Exception as e:
         return 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36'
 
+
 def check_tasks(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -116,23 +127,23 @@ def check_tasks(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
-    
+
     response = requests.get('https://game-domain.blum.codes/api/v1/tasks', headers=headers)
     if response.status_code == 200:
         mains = response.json()
         for main in mains:
-            main_tasks = main.get('tasks',[])
-            subSections = main.get('subSections',[])
-            
+            main_tasks = main.get('tasks', [])
+            subSections = main.get('subSections', [])
+
             for subs in subSections:
                 title_task = subs.get('title')
                 print_(f"Main Task Title : {title_task}")
                 tasks = subs.get('tasks')
                 for task in tasks:
-                    sub_title = task.get('title',"")
+                    sub_title = task.get('title', "")
                     if 'invite' in sub_title.lower():
                         print_(f"{sub_title} Skipping Quest")
                     elif 'farm' in sub_title.lower():
@@ -142,31 +153,32 @@ def check_tasks(token):
                             print_(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
                         elif task['status'] == 'NOT_STARTED':
                             print_(f"Starting Task: {task['title']}")
-                            start_task(token, task['id'],sub_title)
+                            start_task(token, task['id'], sub_title)
                             validationType = task.get('validationType')
                             if validationType == 'KEYWORD':
                                 time.sleep(2)
-                                validate_task(token, task['id'],sub_title)
+                                validate_task(token, task['id'], sub_title)
                             time.sleep(5)
-                            claim_task(token, task['id'],sub_title)
+                            claim_task(token, task['id'], sub_title)
                         elif task['status'] == 'READY_FOR_CLAIM':
-                            claim_task(token, task['id'],sub_title)
+                            claim_task(token, task['id'], sub_title)
                         elif task['status'] == 'READY_FOR_VALIDATE':
-                            validate_task(token, task['id'],sub_title)
+                            validate_task(token, task['id'], sub_title)
                             time.sleep(5)
-                            claim_task(token, task['id'],sub_title)
+                            claim_task(token, task['id'], sub_title)
                         else:
-                            print_(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+                            print_(
+                                f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
     else:
         print_(f"Failed to get tasks")
-    
+
 
 def start_task(token, task_id, title):
     time.sleep(2)
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/start'
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -178,7 +190,7 @@ def start_task(token, task_id, title):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
@@ -187,16 +199,17 @@ def start_task(token, task_id, title):
             print_(f"Task {title} started")
         else:
             print_(f"Failed to start task {title}")
-        return 
+        return
     except:
         print_(f"Failed to start task {title} ")
+
 
 def validate_task(token, task_id, title, word=None):
     time.sleep(2)
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/validate'
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -208,27 +221,28 @@ def validate_task(token, task_id, title, word=None):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     payload = {'keyword': word}
     try:
-        response =  response = make_request('post',url, headers=headers, json=payload)
+        response = response = make_request('post', url, headers=headers, json=payload)
         if response is not None:
             print_(f"Task {title} validating")
         else:
             print_(f"Failed to validate task {title}")
-        return 
+        return
     except:
         print_(f"Failed to validate task {title} ")
 
-def claim_task(token, task_id,title):
+
+def claim_task(token, task_id, title):
     time.sleep(2)
     print_(f"Claiming task {title}")
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/claim'
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -240,11 +254,11 @@ def claim_task(token, task_id,title):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
-        response =  response = make_request('post',url, headers=headers)
+        response = response = make_request('post', url, headers=headers)
         if response is not None:
             print_(f"Task {title} claimed")
         else:
@@ -252,11 +266,11 @@ def claim_task(token, task_id,title):
     except:
         print_(f"Failed to claim task {title} ")
 
-        
+
 def get_new_token(query_id):
     import json
     # Header untuk permintaan HTTP
-    data = json.dumps({"query": query_id, "referralToken":'z2MpJGToqt'})
+    data = json.dumps({"query": query_id, "referralToken": 'z2MpJGToqt'})
     headers = {
         'Content-Length': str(len(data)),
         'Accept': 'application/json, text/plain, */*',
@@ -270,15 +284,14 @@ def get_new_token(query_id):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
 
-    
     url = "https://user-domain.blum.codes/api/v1/auth/provider/PROVIDER_TELEGRAM_MINI_APP"
     time.sleep(2)
     print_(f"Getting Tokenss...")
-    response = make_request('post',url, headers=headers, data=data)
+    response = make_request('post', url, headers=headers, data=data)
     if response is not None:
         print_(f"Token Created")
         response_json = response.json()
@@ -287,12 +300,13 @@ def get_new_token(query_id):
         print_(f"Failed get token")
         return None
 
+
 # Fungsi untuk mendapatkan informasi pengguna
 def get_user_info(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -304,17 +318,18 @@ def get_user_info(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
-    response =  response = make_request('get','https://gateway.blum.codes/v1/user/me', headers=headers)
+    response = response = make_request('get', 'https://gateway.blum.codes/v1/user/me', headers=headers)
     if response is not None:
         return response.json()
+
 
 def get_balance(token):
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -326,11 +341,11 @@ def get_balance(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
-        response =  response = make_request('get','https://game-domain.blum.codes/api/v1/user/balance', headers=headers)
+        response = response = make_request('get', 'https://game-domain.blum.codes/api/v1/user/balance', headers=headers)
         if response is not None:
             return response.json()
         else:
@@ -338,11 +353,12 @@ def get_balance(token):
     except requests.exceptions.ConnectionError as e:
         print_(f"Connection Failed ")
 
+
 def play_game(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -354,11 +370,11 @@ def play_game(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
-        response = make_request('post','https://game-domain.blum.codes/api/v2/game/play', headers=headers)
+        response = make_request('post', 'https://game-domain.blum.codes/api/v2/game/play', headers=headers)
         if response is not None:
             return response.json()
         else:
@@ -366,13 +382,14 @@ def play_game(token):
     except Exception as e:
         print_(f"Failed play game, Error {e}")
 
+
 def claim_game(token, game_id, point, freeze):
     time.sleep(2)
     url = "https://game-domain.blum.codes/api/v2/game/claim"
 
     headers = {
         'Authorization': f'Bearer {token}',
-       
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -384,23 +401,24 @@ def claim_game(token, game_id, point, freeze):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     data = get_payloads(game_id, point, freeze)
     if data is not None:
-        payload = {'payload' : data}
+        payload = {'payload': data}
         try:
             response = make_request('post', url, headers=headers, data=json.dumps(payload))
             if response is not None:
                 return response
             else:
                 return None
-        
+
         except Exception as e:
             print_(f"Failed Claim game, error: {e}")
     else:
         return None
+
 
 def get_game_id(token):
     game_response = play_game(token)
@@ -424,11 +442,11 @@ def get_game_id(token):
     else:
         return game_response['gameId']
 
+
 def claim_balance(token):
-    
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -440,12 +458,12 @@ def claim_balance(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         time.sleep(2)
-        response = make_request('post','https://game-domain.blum.codes/api/v1/farming/claim', headers=headers)
+        response = make_request('post', 'https://game-domain.blum.codes/api/v1/farming/claim', headers=headers)
         if response is not None:
             return response.json()
         else:
@@ -454,12 +472,13 @@ def claim_balance(token):
     except Exception as e:
         print_(f"Failed claim balance, error: {e}")
     return None
+
 
 def start_farming(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -471,13 +490,13 @@ def start_farming(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
- 
+
         time.sleep(2)
-        response = make_request('post','https://game-domain.blum.codes/api/v1/farming/start', headers=headers)
+        response = make_request('post', 'https://game-domain.blum.codes/api/v1/farming/start', headers=headers)
         if response is not None:
             return response.json()
         else:
@@ -487,11 +506,12 @@ def start_farming(token):
         print_(f"Failed claim balance, error: {e}")
     return None
 
+
 def check_balance_friend(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-       
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -503,7 +523,7 @@ def check_balance_friend(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
@@ -512,16 +532,17 @@ def check_balance_friend(token):
             return response.json()
         else:
             print_("Failed Check ref")
-    
+
     except Exception as e:
         print_(f"Failed Check ref, error: {e}")
     return None
+
 
 def claim_balance_friend(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -533,7 +554,7 @@ def claim_balance_friend(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
@@ -546,12 +567,15 @@ def claim_balance_friend(token):
         print_(f"Failed Claim ref, error: {e}")
     return None
 
-# cek daily 
+
+# cek daily
 import json
+
+
 def check_daily_reward(token):
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -563,18 +587,19 @@ def check_daily_reward(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
-        response = make_request('post','https://game-domain.blum.codes/api/v1/daily-reward?offset=-420', headers=headers)
+        response = make_request('post', 'https://game-domain.blum.codes/api/v1/daily-reward?offset=-420',
+                                headers=headers)
         if response is not None:
             return response.json()
         else:
             return None
     except Exception as e:
         return None
-      
+
     return None
 
 
@@ -582,7 +607,7 @@ def check_tribe(token):
     url = 'https://game-domain.blum.codes/api/v1/tribe/my'
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -594,7 +619,7 @@ def check_tribe(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
@@ -609,10 +634,10 @@ def check_tribe(token):
 
 
 def join_tribe(token):
-    url ='https://game-domain.blum.codes/api/v1/tribe/9b5495e6-d59b-4628-9b8a-89ca0d113049/join'
+    url = 'https://game-domain.blum.codes/api/v1/tribe/9b5495e6-d59b-4628-9b8a-89ca0d113049/join'
     headers = {
         'Authorization': f'Bearer {token}',
-        
+
         'Accept': 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -624,7 +649,7 @@ def join_tribe(token):
         'Sec-Fetch-Site': 'same-site',
         'Sec-Ch-Ua-mobile': '?1',
         'Sec-Ch-Ua-platform': '"Android"',
-        'content-type' :'application/json',
+        'content-type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
@@ -638,7 +663,10 @@ def join_tribe(token):
     except Exception as e:
         print_(f"Failed join tribe, error: {e}")
     return None
+
+
 checked_tasks = {}
+
 
 def elig_dogs(token):
     url = 'https://game-domain.blum.codes/api/v2/game/eligibility/dogs_drop'
@@ -660,7 +688,7 @@ def elig_dogs(token):
         response = make_request('get', url, headers=headers)
         if response is not None:
             data = response.json()
-            eligible = data.get('eligible',False) 
+            eligible = data.get('eligible', False)
             print_(f"Eligible Dogs Drop: {eligible}")
             return eligible
 
@@ -668,16 +696,18 @@ def elig_dogs(token):
         print_(f"Failed join tribe, error: {e}")
     return None
 
+
 def print_(word):
     now = datetime.now().isoformat(" ").split(".")[0]
     print(f"[{now}] | {word}")
+
 
 def generate_token():
     queries = load_credentials()
     for index, query in enumerate(queries, start=1):
         parse = parse_query(query)
         user = parse.get('user')
-        print_(f"Account {index}  | {user.get('username','')}")
+        print_(f"Account {index}  | {user.get('username', '')}")
         token = get(user['id'])
         if token == None:
             print_("Generate token...")
@@ -686,30 +716,32 @@ def generate_token():
             save(user.get('id'), token)
             print_("Generate Token Done!")
 
+
 def get_verification():
     url = 'https://raw.githubusercontent.com/boytegar/BlumBOT/refs/heads/master/verif.json'
     data = requests.get(url=url)
     return data.json()
 
+
 def get_data_payload():
     url = 'https://raw.githubusercontent.com/zuydd/database/main/blum.json'
     while True:
-        data = make_request('get',url=url)
+        data = make_request('get', url=url)
         if data is not None:
             return data.json()
 
-def create_payload(game_id, point, dogs):
 
+def create_payload(game_id, point, dogs):
     trys = 5
     while True:
         if trys == 0:
             return None
         url = f'https://server2.ggtog.live/api/game'
         payload = {
-                'gameId': game_id,
-                'points': str(point),
-                'dogs': dogs
-            }
+            'gameId': game_id,
+            'points': str(point),
+            'dogs': dogs
+        }
         response = make_request('post', url, json=payload)
         if response is not None:
             data = response.json()
@@ -718,15 +750,17 @@ def create_payload(game_id, point, dogs):
             return None
         trys -= 1
 
+
 def find_by_id(json_data, id):
     for key, value in json_data.items():
         if key == id:
             return value
     return None
 
+
 def main():
     delete_all()
-    claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
+    claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
     selector_game = input("auto playing game ? y/n  : ").strip().lower()
@@ -734,7 +768,7 @@ def main():
     while True:
         delete_all()
         queries = load_credentials()
-        delay_time = random.randint(3700, 3750)*8
+        delay_time = random.randint(3700, 3750) * 8
         start_time = time.time()
         now = datetime.now().isoformat(" ").split(".")[0]
         for index, query in enumerate(queries, start=1):
@@ -742,7 +776,7 @@ def main():
             parse = parse_query(query)
             user = parse.get('user')
             time.sleep(2)
-            print_(f"===== Account {index}  | {user.get('username','')} =====")
+            print_(f"===== Account {index}  | {user.get('username', '')} =====")
             token = get(user['id'])
             if token == None:
                 print_("Generate token...")
@@ -750,14 +784,14 @@ def main():
                 token = get_new_token(query)
                 save(user.get('id'), token)
                 print_("Generate Token Done!")
-            
+
             print_(f"Getting Info....")
             balance_info = get_balance(token)
             if balance_info is None:
                 print_(f"Failed to Get information")
                 continue
             else:
-                available_balance_before = balance_info['availableBalance']  
+                available_balance_before = balance_info['availableBalance']
 
                 balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
                 total_blum += float(available_balance_before)
@@ -766,7 +800,8 @@ def main():
                 data_tribe = check_tribe(token)
                 time.sleep(2)
                 if data_tribe is not None:
-                    print_(f"Tribe         : {data_tribe.get('title')} | Member : {data_tribe.get('countMembers')} | Balance : {data_tribe.get('earnBalance')}")
+                    print_(
+                        f"Tribe         : {data_tribe.get('title')} | Member : {data_tribe.get('countMembers')} | Balance : {data_tribe.get('earnBalance')}")
                 else:
                     print_(f'Tribe not Found')
                     time.sleep(1)
@@ -776,7 +811,7 @@ def main():
                         print_(f'Join Tribe Done')
 
                 farming_info = balance_info.get('farming')
-        
+
                 if farming_info:
                     end_time_ms = farming_info['endTime']
                     end_time_s = end_time_ms / 1000.0
@@ -787,7 +822,8 @@ def main():
                     minutes_remaining = int((time_difference.total_seconds() % 3600) // 60)
                     farming_balance = farming_info['balance']
                     farming_balance_formated = f"{float(farming_balance):,.0f}".replace(",", ".")
-                    print_(f"Claim Balance : {hours_remaining} jam {minutes_remaining} menit | Balance: {farming_balance_formated}")
+                    print_(
+                        f"Claim Balance : {hours_remaining} jam {minutes_remaining} menit | Balance: {farming_balance_formated}")
 
                     if hours_remaining < 0:
                         print_(f"Claim Balance: Claiming balance...")
@@ -847,7 +883,7 @@ def main():
                     if friend_balance['canClaim']:
                         print_(f"Reff Balance: {friend_balance['amountForClaim']}")
                         print_(f"Claiming Ref balance.....")
-                        friend_balance = friend_balance.get('amountForClaim',"0")
+                        friend_balance = friend_balance.get('amountForClaim', "0")
                         if friend_balance != "0":
                             claim_friend_balance = claim_balance_friend(token)
                             if claim_friend_balance:
@@ -873,18 +909,18 @@ def main():
             else:
                 print_(f"Reff Balance : Skipped !                    ")
         # break    
-        
-        if selector_game =='y':
+
+        if selector_game == 'y':
             for index, query in enumerate(queries, start=1):
                 mid_time = time.time()
-                waktu_tunggu = delay_time - (mid_time-start_time)
+                waktu_tunggu = delay_time - (mid_time - start_time)
                 if waktu_tunggu <= 0:
                     break
                 time.sleep(2)
                 parse = parse_query(query)
                 user = parse.get('user')
                 token = get(user['id'])
-                print_(f"XXXX==XXXX Account {index}  | {user.get('username','')} XXXX==XXXX")
+                print_(f"XXXX==XXXX Account {index}  | {user.get('username', '')} XXXX==XXXX")
                 if token == None:
                     print_("Generate token...")
                     time.sleep(2)
@@ -893,7 +929,7 @@ def main():
                     print_("Generate Token Done!")
 
                 balance_info = get_balance(token)
-                available_balance_before = balance_info['availableBalance'] 
+                available_balance_before = balance_info['availableBalance']
                 balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
                 # if check_task_enable == 'y':  
                 #     print_(f"Checking tasks...")
@@ -901,17 +937,17 @@ def main():
                 # continue
 
                 if balance_info.get('playPasses') <= 0:
-                    total_blum += float(available_balance_before) 
+                    total_blum += float(available_balance_before)
                     print_('No have ticket For Playing games')
                 # data_elig = elig_dogs(token)
-                while balance_info['playPasses'] > 0:
+                while balance_info['playPasses'] > 1:
                     print_(f"Play Game : Playing game...")
                     gameId = get_game_id(token)
                     print_(f"Play Game : Checking game...")
                     taps = random.randint(330, 400)
                     delays = random.randint(31, 35)
-                    freeze = random.randint(4,8)
-                    delays += (freeze*5)
+                    freeze = random.randint(4, 8)
+                    delays += (freeze * 5)
                     # dogs = random.randint(20,30)*0.1
                     time.sleep(delays)
                     # if data_elig:
@@ -924,11 +960,11 @@ def main():
                         continue
                     while True:
                         mid_time = time.time()
-                        waktu_tunggu = delay_time - (mid_time-start_time)
+                        waktu_tunggu = delay_time - (mid_time - start_time)
                         if waktu_tunggu <= 0:
                             break
                         if claim_response.text == '{"message":"game session not finished"}':
-                            time.sleep(10)  
+                            time.sleep(10)
                             print_(f"[{now}] Play Game : Game still running waiting....")
                             claim_response = claim_game(token, gameId, taps, 0)
                             if claim_response is None:
@@ -936,31 +972,31 @@ def main():
                         elif claim_response.text == '{"message":"game session not found"}':
                             print_(f"[{now}] Play Game : Game is Done")
                             mid_time = time.time()
-                            waktu_tunggu = delay_time - (mid_time-start_time)
+                            waktu_tunggu = delay_time - (mid_time - start_time)
                             if waktu_tunggu <= 0:
                                 break
                             break
                         elif 'message' in claim_response and claim_response['message'] == 'Token is invalid':
                             print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
-                            continue  
+                            continue
                         else:
                             print_(f"Play Game : Game is Done, Reward Blum Point : {taps}")
                             break
 
-                    balance_info = get_balance(token) 
-                    if balance_info is None: 
+                    balance_info = get_balance(token)
+                    if balance_info is None:
                         print_(f"Play Game failed get information ticket")
                     else:
-                        available_balance_after = balance_info['availableBalance'] 
-                        
-                        before = float(available_balance_before) 
-                        after =  float(available_balance_after)
-                        
-                        total_balance = after - before  
+                        available_balance_after = balance_info['availableBalance']
+
+                        before = float(available_balance_before)
+                        after = float(available_balance_after)
+
+                        total_balance = after - before
                         print_(f"Play Game: You Got Total {total_balance} From Playing Game")
                         if balance_info['playPasses'] > 0:
                             print_(f"Play Game : Tiket still ready, Playing game again...")
-                            continue  
+                            continue
                         else:
                             total_blum += before
                             total_blum += total_balance
@@ -971,124 +1007,128 @@ def main():
         delete_all()
         print_(f"========= ALL ID DONE =========")
         total_acc = len(queries)
-        
-        waktu_tunggu = delay_time - (end_time-start_time)
+
+        waktu_tunggu = delay_time - (end_time - start_time)
         print_(f"Total Account = {total_acc} | Total Points Blum = {round(total_blum)}")
         printdelay(waktu_tunggu)
         if waktu_tunggu >= 0:
-            time.sleep(waktu_tunggu)
+            print('sleeping for 1 hour')
+            time.sleep(3600)
+
 
 def completed_task(token, stask):
-    sub_title = stask.get('title',"")
-    if stask.get('status','') == 'CLAIMED':
-        print_(f"Task {sub_title} claimed  | Status: {stask.get('status','')} | Reward: {stask['reward']}")
-    elif stask.get('status','') == 'NOT_STARTED':
+    sub_title = stask.get('title', "")
+    if stask.get('status', '') == 'CLAIMED':
+        print_(f"Task {sub_title} claimed  | Status: {stask.get('status', '')} | Reward: {stask['reward']}")
+    elif stask.get('status', '') == 'NOT_STARTED':
         print_(f"Starting Task: {stask['title']}")
-        start_task(token, stask['id'],sub_title)
+        start_task(token, stask['id'], sub_title)
         validationType = stask.get('validationType')
         if validationType == 'KEYWORD':
             time.sleep(2)
             verif = get_verification()
             words = find_by_id(verif, stask['id'])
             print_(f"Verification : {words}")
-            validate_task(token, stask['id'],sub_title, word=words)
+            validate_task(token, stask['id'], sub_title, word=words)
         time.sleep(5)
-        claim_task(token, stask['id'],sub_title)
-    elif stask.get('status','') == 'READY_FOR_CLAIM':
-        claim_task(token, stask['id'],sub_title)
-    elif stask.get('status','') == 'READY_FOR_VERIFY': 
+        claim_task(token, stask['id'], sub_title)
+    elif stask.get('status', '') == 'READY_FOR_CLAIM':
+        claim_task(token, stask['id'], sub_title)
+    elif stask.get('status', '') == 'READY_FOR_VERIFY':
         validationType = stask.get('validationType')
         if validationType == 'KEYWORD':
             verif = get_verification()
             words = find_by_id(verif, stask['id'])
             print_(f"Verification : {words}")
             time.sleep(2)
-            validate_task(token, stask['id'],sub_title, word=words)
+            validate_task(token, stask['id'], sub_title, word=words)
         else:
-            validate_task(token, stask['id'],sub_title)
+            validate_task(token, stask['id'], sub_title)
         time.sleep(5)
-        claim_task(token, stask['id'],sub_title)
+        claim_task(token, stask['id'], sub_title)
     else:
-        print_(f"Task already started: {sub_title} | Status: {stask.get('status','')} | Reward: {stask['reward']}")
+        print_(f"Task already started: {sub_title} | Status: {stask.get('status', '')} | Reward: {stask['reward']}")
 
-def task_main():  
+
+def task_main():
     delete_all()
     queries = load_credentials()
     now = datetime.now().isoformat(" ").split(".")[0]
     for index, query in enumerate(queries, start=1):
-            time.sleep(3)
-            parse = parse_query(query)
-            user = parse.get('user')
-            token = get(user['id'])
-            print_(f"[ === Account {index}  | {user.get('username','')} === ]")
-            if token == None:
-                print_("Generate token...")
-                time.sleep(2)
-                token = get_new_token(query)
-                save(user.get('id'), token)
-                print_("Generate Token Done!")
-
-            print_(f"Checking tasks...")
-
+        time.sleep(3)
+        parse = parse_query(query)
+        user = parse.get('user')
+        token = get(user['id'])
+        print_(f"[ === Account {index}  | {user.get('username', '')} === ]")
+        if token == None:
+            print_("Generate token...")
             time.sleep(2)
-            headers = {
-                'Authorization': f'Bearer {token}',
-                'accept': 'application/json, text/plain, */*',
-                'accept-language': 'en-US,en;q=0.9',
-                'content-length': '0',
-                'origin': 'https://telegram.blum.codes',
-                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
-            }
-    
-            response = make_request('get','https://earn-domain.blum.codes/api/v1/tasks', headers=headers)
-            if response is not None:
-                mains = response.json()
-                for main in mains:
-                    main_tasks = main.get('tasks',[])
-                    subSections = main.get('subSections',[])
-                    title = main.get('title', "")
+            token = get_new_token(query)
+            save(user.get('id'), token)
+            print_("Generate Token Done!")
+
+        print_(f"Checking tasks...")
+
+        time.sleep(2)
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-length': '0',
+            'origin': 'https://telegram.blum.codes',
+            'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
+        }
+
+        response = make_request('get', 'https://earn-domain.blum.codes/api/v1/tasks', headers=headers)
+        if response is not None:
+            mains = response.json()
+            for main in mains:
+                main_tasks = main.get('tasks', [])
+                subSections = main.get('subSections', [])
+                title = main.get('title', "")
+                if title == "New":
+                    print_(f"Title : {title} Skip")
+                else:
+                    print_(f"Title : {title} Start")
+                    for task in main_tasks:
+                        sub_title = task.get('title', "")
+                        subtask = task.get('subTasks', [])
+                        for stask in subtask:
+                            sub_title = stask.get('title', "")
+                            if 'invite' in sub_title.lower():
+                                print_(f"{sub_title} Skipping Quest")
+                            elif 'farm' in sub_title.lower():
+                                print_(f"{sub_title} Skipping Quest")
+                            else:
+                                completed_task(token, stask)
+
+                        if 'invite' in sub_title.lower():
+                            print_(f"{sub_title} Skipping Quest")
+                        elif 'farm' in sub_title.lower():
+                            print_(f"{sub_title} Skipping Quest")
+                        else:
+                            completed_task(token, task)
+
+                for subs in subSections:
+                    title = subs.get('title')
                     if title == "New":
                         print_(f"Title : {title} Skip")
                     else:
                         print_(f"Title : {title} Start")
-                        for task in main_tasks:
-                            sub_title = task.get('title',"")
-                            subtask = task.get('subTasks',[])
-                            for stask in subtask:
-                                sub_title = stask.get('title',"")
-                                if 'invite' in sub_title.lower():
-                                    print_(f"{sub_title} Skipping Quest")
-                                elif 'farm' in sub_title.lower():
-                                    print_(f"{sub_title} Skipping Quest")
-                                else:
-                                    completed_task(token, stask)
-                            
+                        print_(f"Main Task Title : {title}")
+                        tasks = subs.get('tasks')
+                        for task in tasks:
+                            sub_title = task.get('title', "")
                             if 'invite' in sub_title.lower():
                                 print_(f"{sub_title} Skipping Quest")
                             elif 'farm' in sub_title.lower():
                                 print_(f"{sub_title} Skipping Quest")
                             else:
                                 completed_task(token, task)
+        else:
+            print_(f"Failed to get tasks")
+        # continue
 
-                    for subs in subSections:
-                        title = subs.get('title')
-                        if title == "New":
-                            print_(f"Title : {title} Skip")
-                        else:
-                            print_(f"Title : {title} Start")
-                            print_(f"Main Task Title : {title}")
-                            tasks = subs.get('tasks')
-                            for task in tasks:
-                                sub_title = task.get('title',"")
-                                if 'invite' in sub_title.lower():
-                                    print_(f"{sub_title} Skipping Quest")
-                                elif 'farm' in sub_title.lower():
-                                    print_(f"{sub_title} Skipping Quest")
-                                else:
-                                    completed_task(token, task)
-            else:
-                print_(f"Failed to get tasks")
-            # continue
 
 def start():
     print(r"""
@@ -1111,11 +1151,14 @@ def start():
         task_main()
     else:
         exit()
+
+
 def printdelay(delay):
     now = datetime.now().isoformat(" ").split(".")[0]
     hours, remainder = divmod(delay, 3600)
     minutes, sec = divmod(remainder, 60)
     print(f"{now} | t.me/D4rkCipherX : {hours} hours, {minutes} minutes, and {round(sec)} seconds")
+
 
 if __name__ == "__main__":
     start()
